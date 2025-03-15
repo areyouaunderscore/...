@@ -1,0 +1,49 @@
+import time
+import math
+import keyboard
+import mouse
+
+# Configuration
+AIM_SMOOTHING = 0.3  # Lower = faster lock, higher = smoother
+TARGET_BONE = "head"  # Can be changed to "chest", "pelvis", etc.
+
+def get_target():
+    """Find enemy closest to the crosshair."""
+    enemies = get_visible_enemies()  # Replace with actual ESP data
+    best_target = None
+    closest_distance = float("inf")
+
+    crosshair_x, crosshair_y = get_crosshair_position()
+
+    for enemy in enemies:
+        screen_x, screen_y = world_to_screen(enemy.position[TARGET_BONE])
+        distance = math.hypot(screen_x - crosshair_x, screen_y - crosshair_y)
+
+        if distance < closest_distance:
+            closest_distance = distance
+            best_target = (screen_x, screen_y)
+
+    return best_target
+
+def smooth_aim(target_x, target_y):
+    """Gradually move aim towards target."""
+    if not target_x or not target_y:
+        return
+
+    current_x, current_y = get_crosshair_position()
+    delta_x = target_x - current_x
+    delta_y = target_y - current_y
+
+    mouse.move(delta_x * AIM_SMOOTHING, delta_y * AIM_SMOOTHING, absolute=False)
+
+def aim_assist():
+    """Main loop for AI aim assist."""
+    while True:
+        if keyboard.is_pressed("right"):
+            target = get_target()
+            if target:
+                smooth_aim(*target)
+        time.sleep(0.005)  # Small delay to avoid over-processing
+
+# Start the script
+aim_assist()
